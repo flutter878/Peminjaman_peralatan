@@ -64,58 +64,39 @@ const VerticalMenu = ({ scrollMenu }: { scrollMenu: (container: any, isPerfectSc
         <SubMenu
           label='Dashboards'
           icon={<i className='ri-home-smile-line' />}
-          suffix={<Chip label='5' size='small' color='error' />}
         >
-          <MenuItem
-            href={`${process.env.NEXT_PUBLIC_PRO_URL}/dashboards/crm`}
-            suffix={<Chip label='Pro' size='small' color='primary' variant='tonal' />}
-            target='_blank'
-          >
-            CRM
-          </MenuItem>
           <MenuItem href='/'>Analytics</MenuItem>
-          <MenuItem
-            href={`${process.env.NEXT_PUBLIC_PRO_URL}/dashboards/ecommerce`}
-            suffix={<Chip label='Pro' size='small' color='primary' variant='tonal' />}
-            target='_blank'
-          >
-            eCommerce
-          </MenuItem>
-          <MenuItem
-            href={`${process.env.NEXT_PUBLIC_PRO_URL}/dashboards/academy`}
-            suffix={<Chip label='Pro' size='small' color='primary' variant='tonal' />}
-            target='_blank'
-          >
-            Academy
-          </MenuItem>
-          <MenuItem
-            href={`${process.env.NEXT_PUBLIC_PRO_URL}/dashboards/logistics`}
-            suffix={<Chip label='Pro' size='small' color='primary' variant='tonal' />}
-            target='_blank'
-          >
-            Logistics
-          </MenuItem>
-        </SubMenu>
+            </SubMenu>
         <SubMenu
-          label='Front Pages'
-          icon={<i className='ri-file-copy-line' />}
-          suffix={<Chip label='Pro' size='small' color='primary' variant='tonal' />}
+          label='Peminjaman'
+          icon={<i className='ri-align-top' />}
         >
-          <MenuItem href={`${process.env.NEXT_PUBLIC_PRO_URL}/front-pages/landing-page`} target='_blank'>
-            Landing
+          <MenuItem href={`/front-pages/landing-page`} target='_blank'>
+            Permintaan Peminjaman
           </MenuItem>
           <MenuItem href={`${process.env.NEXT_PUBLIC_PRO_URL}/front-pages/pricing`} target='_blank'>
-            Pricing
+            Barang Dipinjam
           </MenuItem>
           <MenuItem href={`${process.env.NEXT_PUBLIC_PRO_URL}/front-pages/payment`} target='_blank'>
-            Payment
+            Konfirmasi Pengembalian
           </MenuItem>
           <MenuItem href={`${process.env.NEXT_PUBLIC_PRO_URL}/front-pages/checkout`} target='_blank'>
-            Checkout
+            Barang Dikembalikan
           </MenuItem>
-          <MenuItem href={`${process.env.NEXT_PUBLIC_PRO_URL}/front-pages/help-center`} target='_blank'>
-            Help Center
+
+        </SubMenu>
+
+        <SubMenu
+          label='Barang dan Tempat'
+          icon={<i className='ri-table-alt-line' />}
+        >
+          <MenuItem href={`/front-pages/landing-page`} target='_blank'>
+            Data Barang
           </MenuItem>
+          <MenuItem href={`${process.env.NEXT_PUBLIC_PRO_URL}/front-pages/pricing`} target='_blank'>
+            Tempat Penyimpanan
+          </MenuItem>
+
         </SubMenu>
         <MenuSection label='Apps & Pages'>
           <MenuItem
