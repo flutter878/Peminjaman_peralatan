@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
 
     if (kode) {
       // Check if kode already exists
-      const [data] = await pool.execute('SELECT * FROM lokasi_penyimpanan_232328 WHERE kode_lokasi_232328 = ?', [kode])
+      const [data] = await pool.execute('SELECT * FROM lokasi_232328 WHERE kode_lokasi_232328 = ?', [kode])
 
       return NextResponse.json({
         success: true,
@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
 
     if (nama) {
       // Check if nama already exists
-      const [data] = await pool.execute('SELECT * FROM lokasi_penyimpanan_232328 WHERE nama_lokasi_232328 = ?', [nama])
+      const [data] = await pool.execute('SELECT * FROM lokasi_232328 WHERE nama_lokasi_232328 = ?', [nama])
 
       return NextResponse.json({
         success: true,
@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Get all lokasi
-    const [lokasi] = await pool.execute('SELECT * FROM lokasi_penyimpanan_232328 ORDER BY kode_lokasi_232328')
+    const [lokasi] = await pool.execute('SELECT * FROM lokasi_232328 ORDER BY kode_lokasi_232328')
 
     return NextResponse.json({
       success: true,
@@ -54,18 +54,14 @@ export async function POST(req: Request) {
     }
 
     // Check if kode_lokasi already exists
-    const [existingKode] = await pool.execute('SELECT * FROM lokasi_penyimpanan_232328 WHERE kode_lokasi_232328 = ?', [
-      kode_lokasi
-    ])
+    const [existingKode] = await pool.execute('SELECT * FROM lokasi_232328 WHERE kode_lokasi_232328 = ?', [kode_lokasi])
 
     if (Array.isArray(existingKode) && existingKode.length > 0) {
       return NextResponse.json({ success: false, message: 'Kode lokasi sudah digunakan' }, { status: 409 })
     }
 
     // Check if nama_lokasi already exists
-    const [existingNama] = await pool.execute('SELECT * FROM lokasi_penyimpanan_232328 WHERE nama_lokasi_232328 = ?', [
-      nama_lokasi
-    ])
+    const [existingNama] = await pool.execute('SELECT * FROM lokasi_232328 WHERE nama_lokasi_232328 = ?', [nama_lokasi])
 
     if (Array.isArray(existingNama) && existingNama.length > 0) {
       return NextResponse.json({ success: false, message: 'Nama lokasi sudah digunakan' }, { status: 409 })
@@ -73,7 +69,7 @@ export async function POST(req: Request) {
 
     // Insert lokasi
     await pool.execute(
-      `INSERT INTO lokasi_penyimpanan_232328
+      `INSERT INTO lokasi_232328
        (kode_lokasi_232328, nama_lokasi_232328)
        VALUES (?, ?)`,
       [kode_lokasi, nama_lokasi]
@@ -106,10 +102,9 @@ export async function PUT(req: Request) {
 
     // Check if new kode already exists (if kode changed)
     if (kode_lokasi !== kode_lokasi_lama) {
-      const [existingKode] = await pool.execute(
-        'SELECT * FROM lokasi_penyimpanan_232328 WHERE kode_lokasi_232328 = ?',
-        [kode_lokasi]
-      )
+      const [existingKode] = await pool.execute('SELECT * FROM lokasi_232328 WHERE kode_lokasi_232328 = ?', [
+        kode_lokasi
+      ])
 
       if (Array.isArray(existingKode) && existingKode.length > 0) {
         return NextResponse.json({ success: false, message: 'Kode lokasi sudah digunakan' }, { status: 409 })
@@ -117,19 +112,17 @@ export async function PUT(req: Request) {
     }
 
     // Check if new nama already exists (if nama changed)
-    const [existingByOldKode] = await pool.execute(
-      'SELECT * FROM lokasi_penyimpanan_232328 WHERE kode_lokasi_232328 = ?',
-      [kode_lokasi_lama]
-    )
+    const [existingByOldKode] = await pool.execute('SELECT * FROM lokasi_232328 WHERE kode_lokasi_232328 = ?', [
+      kode_lokasi_lama
+    ])
 
     if (Array.isArray(existingByOldKode) && existingByOldKode.length > 0) {
       const oldNama = (existingByOldKode[0] as any).nama_lokasi_232328
 
       if (nama_lokasi !== oldNama) {
-        const [existingNama] = await pool.execute(
-          'SELECT * FROM lokasi_penyimpanan_232328 WHERE nama_lokasi_232328 = ?',
-          [nama_lokasi]
-        )
+        const [existingNama] = await pool.execute('SELECT * FROM lokasi_232328 WHERE nama_lokasi_232328 = ?', [
+          nama_lokasi
+        ])
 
         if (Array.isArray(existingNama) && existingNama.length > 0) {
           return NextResponse.json({ success: false, message: 'Nama lokasi sudah digunakan' }, { status: 409 })
@@ -139,7 +132,7 @@ export async function PUT(req: Request) {
 
     // Update lokasi
     await pool.execute(
-      `UPDATE lokasi_penyimpanan_232328 SET kode_lokasi_232328 = ?, nama_lokasi_232328 = ? WHERE kode_lokasi_232328 = ?`,
+      `UPDATE lokasi_232328 SET kode_lokasi_232328 = ?, nama_lokasi_232328 = ? WHERE kode_lokasi_232328 = ?`,
       [kode_lokasi, nama_lokasi, kode_lokasi_lama]
     )
 
@@ -165,7 +158,7 @@ export async function DELETE(req: Request) {
     }
 
     // Delete lokasi
-    await pool.execute('DELETE FROM lokasi_penyimpanan_232328 WHERE kode_lokasi_232328 = ?', [kode_lokasi])
+    await pool.execute('DELETE FROM lokasi_232328 WHERE kode_lokasi_232328 = ?', [kode_lokasi])
 
     return NextResponse.json({
       success: true,

@@ -7,6 +7,18 @@ import { Alert } from '@mui/material'
 
 interface BarangFormProps {
   onSuccess?: () => void
+  editData?: {
+    kode_barang_232328: string
+    nama_barang_232328: string
+    kode_kategori_232328: string
+    kode_lokasi_232328: string
+    kondisi_232328: string
+    status_232328: string
+    jumlah_232328: number
+    deskripsi_232328: string
+    gambar_232328?: string
+  }
+  onCancel?: () => void
 }
 
 interface Kategori {
@@ -19,7 +31,9 @@ interface Lokasi {
   nama_lokasi_232328: string
 }
 
-export default function BarangForm({ onSuccess }: BarangFormProps) {
+export default function BarangForm({ onSuccess, editData = null, onCancel }: BarangFormProps) {
+  const isEditMode = !!editData
+
   const [loading, setLoading] = useState(false)
   const [loadingOptions, setLoadingOptions] = useState(true)
   const [error, setError] = useState('')
@@ -29,15 +43,20 @@ export default function BarangForm({ onSuccess }: BarangFormProps) {
   const [lokasis, setLokasis] = useState<Lokasi[]>([])
 
   const [formData, setFormData] = useState({
-    kode_barang: '',
-    nama_barang: '',
-    kode_kategori: '',
-    kode_lokasi: '',
-    kondisi: 'baik',
-    status: 'tersedia',
-    jumlah: '',
-    deskripsi: ''
+    kode_barang: editData?.kode_barang_232328 || '',
+    nama_barang: editData?.nama_barang_232328 || '',
+    kode_kategori: editData?.kode_kategori_232328 || '',
+    kode_lokasi: editData?.kode_lokasi_232328 || '',
+    kondisi: editData?.kondisi_232328 || 'baik',
+    status: editData?.status_232328 || 'tersedia',
+    jumlah: editData?.jumlah_232328?.toString() || '',
+    deskripsi: editData?.deskripsi_232328 || '',
+    gambar: ''
   })
+
+  const [previewGambar, setPreviewGambar] = useState<string | null>(
+    editData?.gambar_232328 ? `data:image/jpeg;base64,${editData.gambar_232328}` : null
+  )
 
   // Fetch kategori and lokasi options
   useEffect(() => {
@@ -115,6 +134,28 @@ export default function BarangForm({ onSuccess }: BarangFormProps) {
     }))
   }
 
+  // Handle file upload for gambar
+  const handleGambarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+
+    if (file) {
+      const reader = new FileReader()
+
+      reader.onload = event => {
+        const base64String = event.target?.result as string
+
+        setFormData(prev => ({
+          ...prev,
+          gambar: base64String.split(',')[1] || base64String // Get only the base64 part
+        }))
+
+        setPreviewGambar(base64String)
+      }
+
+      reader.readAsDataURL(file)
+    }
+  }
+
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setError('')
@@ -141,7 +182,7 @@ export default function BarangForm({ onSuccess }: BarangFormProps) {
     }
 
     // Check if kode is duplicate
-    if (kodeDuplicate) {
+    if (!isEditMode && kodeDuplicate) {
       setError('Kode barang sudah digunakan')
 
       return
@@ -150,27 +191,45 @@ export default function BarangForm({ onSuccess }: BarangFormProps) {
     setLoading(true)
 
     try {
+      const method = isEditMode ? 'PUT' : 'POST'
+
+      const requestBody = isEditMode
+        ? {
+            kode_barang: formData.kode_barang,
+            nama_barang: formData.nama_barang,
+            kode_kategori: formData.kode_kategori,
+            kode_lokasi: formData.kode_lokasi,
+            kondisi: formData.kondisi,
+            status: formData.status,
+            jumlah: parseInt(formData.jumlah),
+            deskripsi: formData.deskripsi || null,
+            gambar: formData.gambar || null,
+            kode_barang_lama: editData?.kode_barang_232328
+          }
+        : {
+            kode_barang: formData.kode_barang,
+            nama_barang: formData.nama_barang,
+            kode_kategori: formData.kode_kategori,
+            kode_lokasi: formData.kode_lokasi,
+            kondisi: formData.kondisi,
+            status: formData.status,
+            jumlah: parseInt(formData.jumlah),
+            deskripsi: formData.deskripsi || null,
+            gambar: formData.gambar || null
+          }
+
       const response = await fetch('/api/barang', {
-        method: 'POST',
+        method,
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          kode_barang: formData.kode_barang,
-          nama_barang: formData.nama_barang,
-          kode_kategori: formData.kode_kategori,
-          kode_lokasi: formData.kode_lokasi,
-          kondisi: formData.kondisi,
-          status: formData.status,
-          jumlah: parseInt(formData.jumlah),
-          deskripsi: formData.deskripsi || null
-        })
+        body: JSON.stringify(requestBody)
       })
 
       const result = await response.json()
 
       if (result.success) {
-        setSuccess('Barang berhasil ditambahkan')
+        setSuccess(isEditMode ? 'Barang berhasil diperbarui' : 'Barang berhasil ditambahkan')
         setFormData({
           kode_barang: '',
           nama_barang: '',
@@ -179,15 +238,22 @@ export default function BarangForm({ onSuccess }: BarangFormProps) {
           kondisi: 'baik',
           status: 'tersedia',
           jumlah: '',
-          deskripsi: ''
+          deskripsi: '',
+          gambar: ''
         })
+        setPreviewGambar(null)
+
+        // Call onCancel first if in edit mode (will clear editData in parent)
+        if (isEditMode) {
+          onCancel?.()
+        }
 
         // Call onSuccess callback
         setTimeout(() => {
           onSuccess?.()
         }, 1500)
       } else {
-        setError(result.message || 'Gagal menambah barang')
+        setError(result.message || (isEditMode ? 'Gagal memperbarui barang' : 'Gagal menambah barang'))
       }
     } catch (err) {
       setError('Terjadi kesalahan saat menambah barang')
@@ -365,6 +431,25 @@ export default function BarangForm({ onSuccess }: BarangFormProps) {
               className='w-full rounded border border-gray-300 px-3 py-2'
               disabled={loading || loadingOptions}
             />
+          </div>
+
+          {/* Gambar */}
+          <div className='md:col-span-2'>
+            <label className='mb-2 block text-sm font-medium'>Gambar Barang</label>
+            <input
+              type='file'
+              accept='image/*'
+              onChange={handleGambarChange}
+              className='w-full rounded border border-gray-300 px-3 py-2'
+              disabled={loading || loadingOptions}
+            />
+            <p className='mt-1 text-xs text-gray-500'>Format: JPG, PNG, GIF (Maks 5MB)</p>
+            {previewGambar && (
+              <div className='mt-4'>
+                <p className='mb-2 text-sm font-medium'>Preview:</p>
+                <img src={previewGambar} alt='Preview' className='h-32 w-32 rounded border object-cover' />
+              </div>
+            )}
           </div>
         </div>
 

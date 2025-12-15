@@ -1,14 +1,11 @@
 'use client'
 
-// React Imports
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 
-// Next Imports
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
-// MUI Imports
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Typography from '@mui/material/Typography'
@@ -18,38 +15,79 @@ import InputAdornment from '@mui/material/InputAdornment'
 import Checkbox from '@mui/material/Checkbox'
 import Button from '@mui/material/Button'
 import FormControlLabel from '@mui/material/FormControlLabel'
-import Divider from '@mui/material/Divider'
+import Alert from '@mui/material/Alert'
+import CircularProgress from '@mui/material/CircularProgress'
 
-// Type Imports
 import type { Mode } from '@core/types'
 
-// Component Imports
 import Logo from '@components/layout/shared/Logo'
 import Illustrations from '@components/Illustrations'
-
-// Config Imports
-
-
-// Hook Imports
 import { useImageVariant } from '@core/hooks/useImageVariant'
 
 const Login = ({ mode }: { mode: Mode }) => {
-  // States
-  const [isPasswordShown, setIsPasswordShown] = useState(false)
-
-  // Vars
   const darkImg = '/images/pages/auth-v1-mask-dark.png'
   const lightImg = '/images/pages/auth-v1-mask-light.png'
 
-  // Hooks
+  const [isPasswordShown, setIsPasswordShown] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  const [formData, setFormData] = useState({
+    email: '',
+    pass: ''
+  })
+
   const router = useRouter()
   const authBackground = useImageVariant(mode, lightImg, darkImg)
 
   const handleClickShowPassword = () => setIsPasswordShown(show => !show)
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
+
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }))
+  }
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    router.push('/')
+    setError('')
+    setLoading(true)
+
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          pass: formData.pass
+        })
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        localStorage.setItem('user', JSON.stringify(result.data))
+        localStorage.setItem('role', result.role)
+
+        if (result.role === 'admin') {
+          router.push('/dashboard')
+        } else {
+          router.push('/user-dashboard')
+        }
+      } else {
+        setError(result.message || 'Login gagal')
+      }
+    } catch (err) {
+      setError('Terjadi kesalahan saat login')
+      console.error('Login error:', err)
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -62,15 +100,34 @@ const Login = ({ mode }: { mode: Mode }) => {
           <div className='flex flex-col gap-5'>
             <div className='text-center'>
               <Typography variant='h4'>{`Selamat Datang!👋🏻`}</Typography>
-              <Typography className='mbs-1'>Silahkan login untuk Peminjaman </Typography>
+              <Typography className='mbs-1'>Silahkan login untuk Peminjaman</Typography>
             </div>
+            {error && (
+              <Alert severity='error' className='mb-4'>
+                {error}
+              </Alert>
+            )}
             <form noValidate autoComplete='off' onSubmit={handleSubmit} className='flex flex-col gap-5'>
-              <TextField autoFocus fullWidth label='Email' />
+              <TextField
+                fullWidth
+                label='Email'
+                name='email'
+                type='email'
+                value={formData.email}
+                onChange={handleChange}
+                disabled={loading}
+                required
+              />
               <TextField
                 fullWidth
                 label='Password'
+                name='pass'
                 id='outlined-adornment-password'
                 type={isPasswordShown ? 'text' : 'password'}
+                value={formData.pass}
+                onChange={handleChange}
+                disabled={loading}
+                required
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position='end'>
@@ -92,29 +149,14 @@ const Login = ({ mode }: { mode: Mode }) => {
                   Forgot password?
                 </Typography>
               </div>
-              <Button fullWidth variant='contained' type='submit'>
-                Log In
+              <Button fullWidth variant='contained' type='submit' disabled={loading}>
+                {loading ? <CircularProgress size={24} /> : 'Log In'}
               </Button>
               <div className='flex justify-center items-center flex-wrap gap-2'>
                 <Typography>New on our platform?</Typography>
                 <Typography component={Link} href='/register' color='primary'>
                   Create an account
                 </Typography>
-              </div>
-              <Divider className='gap-3'>or</Divider>
-              <div className='flex justify-center items-center gap-2'>
-                <IconButton size='small' className='text-facebook'>
-                  <i className='ri-facebook-fill' />
-                </IconButton>
-                <IconButton size='small' className='text-twitter'>
-                  <i className='ri-twitter-fill' />
-                </IconButton>
-                <IconButton size='small' className='text-github'>
-                  <i className='ri-github-fill' />
-                </IconButton>
-                <IconButton size='small' className='text-googlePlus'>
-                  <i className='ri-google-fill' />
-                </IconButton>
               </div>
             </form>
           </div>

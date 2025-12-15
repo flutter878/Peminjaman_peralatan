@@ -13,19 +13,22 @@ interface Barang {
   status_232328: string
   jumlah_232328: number
   deskripsi_232328: string
+  gambar_232328?: string
 }
 
 interface BarangListTableProps {
   refreshTrigger?: number
+  onEdit?: (data: Barang) => void
 }
 
-export default function BarangListTable({ refreshTrigger = 0 }: BarangListTableProps) {
+export default function BarangListTable({ refreshTrigger = 0, onEdit }: BarangListTableProps) {
   const [barangs, setBarangs] = useState<Barang[]>([])
   const [filteredBarangs, setFilteredBarangs] = useState<Barang[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [itemsPerPage, setItemsPerPage] = useState(10)
   const [currentPage, setCurrentPage] = useState(1)
+  const [deleteLoading, setDeleteLoading] = useState(false)
 
   const fetchBarangs = async () => {
     setLoading(true)
@@ -77,6 +80,37 @@ export default function BarangListTable({ refreshTrigger = 0 }: BarangListTableP
   const handleNextPage = () => {
     if (currentPage < totalPages) {
       setCurrentPage(currentPage + 1)
+    }
+  }
+
+  const handleDelete = async (kode: string) => {
+    if (!window.confirm('Apakah Anda yakin ingin menghapus barang ini?')) {
+      return
+    }
+
+    setDeleteLoading(true)
+
+    try {
+      const response = await fetch('/api/barang', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ kode_barang: kode })
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        fetchBarangs()
+      } else {
+        alert(result.message || 'Gagal menghapus barang')
+      }
+    } catch (error) {
+      console.error('Error deleting barang:', error)
+      alert('Terjadi kesalahan saat menghapus barang')
+    } finally {
+      setDeleteLoading(false)
     }
   }
 
@@ -146,6 +180,7 @@ export default function BarangListTable({ refreshTrigger = 0 }: BarangListTableP
         <thead>
           <tr>
             <th>No.</th>
+            <th>Gambar</th>
             <th>Kode Barang</th>
             <th>Nama Barang</th>
             <th>Kategori</th>
@@ -153,7 +188,7 @@ export default function BarangListTable({ refreshTrigger = 0 }: BarangListTableP
             <th>Kondisi</th>
             <th>Status</th>
             <th>Jumlah</th>
-            <th>Deskripsi</th>
+            <th>Aksi</th>
           </tr>
         </thead>
         <tbody>
@@ -161,6 +196,19 @@ export default function BarangListTable({ refreshTrigger = 0 }: BarangListTableP
             paginatedBarangs.map((barang, index) => (
               <tr key={barang.kode_barang_232328}>
                 <td className={tableStyles.rowNumber}>{startIndex + index + 1}</td>
+                <td>
+                  {barang.gambar_232328 ? (
+                    <img
+                      src={`data:image/jpeg;base64,${barang.gambar_232328}`}
+                      alt={barang.nama_barang_232328}
+                      className='h-12 w-12 rounded object-cover'
+                    />
+                  ) : (
+                    <div className='flex h-12 w-12 items-center justify-center rounded bg-gray-200'>
+                      <span className='text-xs text-gray-500'>No image</span>
+                    </div>
+                  )}
+                </td>
                 <td className={tableStyles.kode}>{barang.kode_barang_232328}</td>
                 <td>{barang.nama_barang_232328}</td>
                 <td>{barang.kode_kategori_232328}</td>
@@ -192,12 +240,27 @@ export default function BarangListTable({ refreshTrigger = 0 }: BarangListTableP
                   </span>
                 </td>
                 <td className={tableStyles.quantity}>{barang.jumlah_232328}</td>
-                <td>{barang.deskripsi_232328 || '-'}</td>
+                <td className='flex gap-2'>
+                  <button
+                    onClick={() => onEdit?.(barang)}
+                    className='rounded bg-blue-500 px-2 py-1 text-xs text-white hover:bg-blue-600'
+                    disabled={deleteLoading}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDelete(barang.kode_barang_232328)}
+                    className='rounded bg-red-500 px-2 py-1 text-xs text-white hover:bg-red-600 disabled:bg-gray-400'
+                    disabled={deleteLoading}
+                  >
+                    {deleteLoading ? 'Deleting...' : 'Delete'}
+                  </button>
+                </td>
               </tr>
             ))
           ) : (
             <tr>
-              <td colSpan={9} className={tableStyles.emptyState}>
+              <td colSpan={10} className={tableStyles.emptyState}>
                 Tidak ada data barang
               </td>
             </tr>
